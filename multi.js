@@ -1,5 +1,3 @@
-var customLog;
-
 BOT = {
     chars:[],
     timeout:5000,
@@ -277,6 +275,3 @@ panelek.appendChild(masterLabel);
 panelek.appendChild(masterSelect);
 
 document.body.appendChild(panelek);
-
-
-customLog(`<span style="color: #CCE5FF;"><b>ZAŁADOWANO SKRYPT</b></span><span style="color: white;"><b> (MULTI.JS)</b></span>`)
