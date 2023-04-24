@@ -1,3 +1,5 @@
+var kody;
+
 BOT = {
     chars:[],
     timeout:5000,
