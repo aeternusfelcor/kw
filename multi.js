@@ -1,20 +1,54 @@
-var kody;
+let intervalId;
 
 BOT = {
     chars:[],
-    timeout:5000,
+    timeout:4000,
+}
+
+function startUpdatingTime() {
+  intervalId = setInterval(updateTime, 1000);
+}
+
+setInterval(() => {
+  autoSSJ();
+    }, 4000 * 1 * 1);
+var checkSSJ= true;  
+
+  function autoSSJ()
+{
+if(checkSSJ && GAME.quick_opts.ssj)
+{
+ if($("#ssj_bar")[0].attributes[2].value=="display: none;")
+ {
+   GAME.emitOrder({a: 18, type: 5, tech_id: GAME.quick_opts.ssj[0]});
+   return true;
+ }
+ else if ($('#ssj_status').text()=="--:--:--"){
+   GAME.emitOrder({a:18,type:6});
+   window.setTimeout(autoSSJ,100);
+ }
+ else
+ {
+   return false;
+ }
+}
+else
+{
+ return false;
+}
+}
+
+function stopUpdatingTime() {
+  clearInterval(intervalId);
 }
 
 function updateTime() {
-  const date = new Date();
-  const minutes = date.getMinutes();
-  
-if ((minutes === 0 || minutes === 2 || minutes === 4) && date.getSeconds() === 5) {
-    checkCodes();
-}
-
-if ((minutes === 0 || minutes === 2 || minutes === 4) && date.getSeconds() === 5) {
-    BOT.Start();
+  if (GAME.char_tables.timed_actions[0] === undefined) {
+      BOT.Start();
+  } else {
+      if (GAME.char_data.train_ucd-GAME.getTime() + 10 <= 0) {
+        BOT.Start();
+    }
   }
 }
 
@@ -36,19 +70,29 @@ BOT.GetChars = function(){
     });
 }();
 
-BOT.Start = function(){
-    if (this.chars.length > 0) {
-        for (let i = 0; i < this.chars.length; i++) {
-            let char_id = parseInt(this.chars[i].id);
-            let source = this.chars[i].source;
-            if (source === 'select_char') {
-                setTimeout(function(){ BOT.LogIn(char_id); }, i * this.timeout);
-            } else if (source === 'select_zast') {
-                setTimeout(function(){ BOT.LogIn(char_id, 1); }, i * this.timeout);
-            }
-        }
-        setTimeout(function(){ BOT.LogIn(BOT.chars[0].id); }, this.chars.length * this.timeout);
+BOT.Start = function() {
+  if (this.chars.length > 0) {
+    stopUpdatingTime(); // Wyłącz setInterval
+
+    for (let i = 0; i < this.chars.length; i++) {
+      let char_id = parseInt(this.chars[i].id);
+      let source = this.chars[i].source;
+      if (source === 'select_char') {
+        setTimeout(function() {
+          BOT.LogIn(char_id);
+        }, i * this.timeout);
+      } else if (source === 'select_zast') {
+        setTimeout(function() {
+          BOT.LogIn(char_id, 1);
+        }, i * this.timeout);
+      }
     }
+
+    setTimeout(function() {
+      BOT.LogIn(BOT.chars[0].id);
+      startUpdatingTime(); // Włącz setInterval po zakończeniu
+    }, this.chars.length * this.timeout);
+  }
 }
 
 BOT.LogIn = function(char_id, type = 0){
@@ -57,17 +101,13 @@ BOT.LogIn = function(char_id, type = 0){
         orders.type = 1;
     }
     GAME.emitOrder(orders);
-    setTimeout(function(){  GAME.emitOrder({a:8,type:5,doublec:$("#train_upgrade_double").is(':checked'),multi:$("#train_upgrade_multi").is(':checked'),code:kody,apud:'vzaaa'}); }, 1000);
     setTimeout(function(){
     if (GAME.char_tables.timed_actions[0] === undefined) {
       GAME.emitOrder(order);
     }
-     }, 3000); 
-    setTimeout(function(){  GAME.emitOrder({a:8,type:5,doublec:$("#train_upgrade_double").is(':checked'),multi:$("#train_upgrade_multi").is(':checked'),code:kody,apud:'vzaaa'}); }, 4000);
+     }, 1000); 
+     setTimeout(function(){  GAME.emitOrder({a:8,type:5,apud:'vzaaa'}); }, 2500);
 }
-
-setInterval(updateTime, 1000);
-
 
 const panelek = document.createElement('div');
 
@@ -225,49 +265,67 @@ const order = {
   type: 2,
   stat: 1,
   duration: 1,
-  code: kody,
   master: 0
 };
 
+const acceptButton = document.createElement('button');
+acceptButton.textContent = 'START';
+acceptButton.style.display = 'block';
+acceptButton.style.marginBottom = '5px';
+acceptButton.style.width = '100%';
+acceptButton.style.padding = '10px';
+acceptButton.style.borderRadius = '10px';
+acceptButton.style.background = 'rgba(60, 179, 113, 0.5)';
+acceptButton.style.color = '#fff';
+acceptButton.style.border = '1px solid #444';
 
-const chars = BOT.chars;
-const nicknames = chars.map(char => char.nick);
-
-const questionMark = document.createElement('span');
-questionMark.textContent = '?';
-questionMark.style.position = 'absolute';
-questionMark.style.top = '0';
-questionMark.style.right = '0';
-questionMark.style.width = '20px';
-questionMark.style.height = '20px';
-questionMark.style.lineHeight = '20px';
-questionMark.style.textAlign = 'center';
-questionMark.style.color = '#fff';
-questionMark.style.fontSize = '20px';
-questionMark.style.cursor = 'help';
-panelek.appendChild(questionMark);
-
-questionMark.addEventListener('mouseover', function() {
-  const tooltip = document.createElement('div');
-  tooltip.innerHTML = `<b>POSTACIE:</b><br>` + nicknames.join(", ")
-  tooltip.style.position = 'absolute';
-  tooltip.style.top = '0px';
-  tooltip.style.right = '-110%';
-  tooltip.style.padding = '10px';
-  tooltip.style.textAlign = 'center';
-  tooltip.style.background = '#000';
-  tooltip.style.color = '#fff';
-  tooltip.style.borderRadius = '5px';
-  tooltip.style.zIndex = '1';
-  panelek.appendChild(tooltip);
-
-questionMark.addEventListener('mouseout', function() {
-    if (panelek.contains(tooltip)) {
-      panelek.removeChild(tooltip);
-    }
-  });
+acceptButton.addEventListener('mouseover', function() {
+  acceptButton.style.background = 'rgba(60, 179, 113, 1.0)';
 });
 
+acceptButton.addEventListener('mouseout', function() {
+  acceptButton.style.background = 'rgba(60, 179, 113, 0.5)';
+});
+
+acceptButton.addEventListener('click', function() {
+  startUpdatingTime();
+  acceptButton.parentNode.replaceChild(stopButton, acceptButton);
+});
+
+const stopButton = document.createElement('button');
+stopButton.textContent = 'STOP';
+stopButton.style.display = 'block';
+stopButton.style.marginBottom = '5px';
+stopButton.style.width = '100%';
+stopButton.style.padding = '10px';
+stopButton.style.borderRadius = '10px';
+stopButton.style.background = 'rgba(255, 0, 0, 0.5)';
+stopButton.style.color = '#fff';
+stopButton.style.border = '1px solid #444';
+
+const counterSpan = document.createElement('span');
+stopButton.appendChild(counterSpan);
+
+function updateCounter() {
+  const timeDifference = $(`#train_uptime`).text()
+  counterSpan.textContent = ` ( ${timeDifference} )`;
+}
+
+setInterval(updateCounter, 1000);
+
+stopButton.addEventListener('mouseover', function() {
+  stopButton.style.background = 'rgba(255, 0, 0, 1.0)';
+});
+
+stopButton.addEventListener('mouseout', function() {
+  stopButton.style.background = 'rgba(255, 0, 0, 0.5)';
+});
+
+
+stopButton.addEventListener('click', function() {
+  stopUpdatingTime();
+  stopButton.parentNode.replaceChild(acceptButton, stopButton);
+});
 
 panelek.appendChild(statLabel);
 panelek.appendChild(statSelect);
@@ -275,5 +333,6 @@ panelek.appendChild(durationLabel);
 panelek.appendChild(durationSelect);
 panelek.appendChild(masterLabel);
 panelek.appendChild(masterSelect);
+panelek.appendChild(acceptButton);
 
 document.body.appendChild(panelek);
